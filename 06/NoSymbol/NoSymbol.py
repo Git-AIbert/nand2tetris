@@ -13,7 +13,7 @@ from Code import Code
 
 
 def NoSymbol(filename):
-    parser = Parser(filename + '.asm')
+    parser = Parser('../' + filename + '.asm')
     code = Code()
     mLanguage = ''
 
@@ -26,7 +26,7 @@ def NoSymbol(filename):
             mLanguage = mLanguage + '111' + code.comp(parser.comp()) + code.dest(parser.dest()) + code.jump(parser.jump()) + '\n'
     
     print(mLanguage)
-    with open(filename + '1.hack', 'w') as file_object:
+    with open('../' + filename + '1.hack', 'w') as file_object:
         file_object.write(mLanguage)
 
 

@@ -46,8 +46,10 @@ class Code:
     }
     
     def symbol(self, symbol):
-        binary = bin(int(symbol))[2:]
-        return binary
+        if symbol[0] >= '0' and symbol[0] <= '9':
+            binary = bin(int(symbol))[2:]
+            return binary
+        return symbol
     
     def dest(self, dest):
         temp = ['0', '0', '0']
