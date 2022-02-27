@@ -1,0 +1,111 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Memory.jack
+
+/**
+ * This library provides two services: direct access to the computer's main
+ * memory (RAM), and allocation and recycling of memory blocks. The Hack RAM
+ * consists of 32,768 words, each holding a 16-bit binary number.
+ */ 
+class Memory {
+    static Array memory;
+    static Array freeList;
+    /** Initializes the class. */
+    function void init() {
+        let memory = 0;
+        let freeList = 2048; // 堆基址
+        let freeList[0] = 14336; // 堆长度
+        let freeList[1] = null; // 下一段地址
+        return;
+    }
+
+    /** Returns the RAM value at the given address. */
+    function int peek(int address) {
+        return memory[address];
+    }
+
+    /** Sets the RAM value at the given address to the given value. */
+    function void poke(int address, int value) {
+        let memory[address] = value;
+        return;
+    }
+
+    /** Finds an available RAM block of the given size and returns
+     *  a reference to its base address. */
+    function int alloc(int size) {
+        var int block;
+        var Array pre, ptr, segment;
+
+        let pre = null;
+        let ptr = freeList;
+        while (~(ptr = null)) {
+            if (ptr[0] > size) {
+                // 不需要从链表中删除块
+                if (ptr[0] > (size + 3)) { // 为空闲内存块留一个字空间，空闲块总共三个字，还有一个字留给内存块的大小
+                    let segment = ptr + size + 1;
+                    let segment[0] = ptr[0] - (size + 1);
+                    let segment[1] = ptr[1];
+                    if (ptr = freeList) {
+                        let freeList = segment;
+                    } else {
+                        let pre[1] = segment;
+                    }
+
+                    let block = ptr + 1;
+                    let block[-1] = size + 1;
+                    return block;
+                } else { // 剩余空间太小，block=找到的整个内存块
+                    if (ptr = freeList) { // 当前是第一个块的位置
+                        let freeList = ptr[1];
+                    } else {
+                        let pre[1] = ptr[1];
+                    }
+                    let block = ptr + 1;
+                    return block;
+                }
+            }
+            let pre = ptr;
+            let ptr = ptr[1];
+        }
+        return false;
+    }
+
+    /** De-allocates the given object (cast as an array) by making
+     *  it available for future allocations. */
+    function void deAlloc(Array o) {
+        var Array pre, ptr, segment;
+
+        let segment = o - 1;
+        let segment[1] = null;
+
+        let ptr = freeList;
+        while ((ptr < segment) & ~(ptr = null)){
+            let pre = ptr;
+            let ptr = ptr[1];
+        }
+        if (~(ptr = null)) { // 后有空闲块
+            if (segment + segment[0] = ptr){ // 后有连续空闲块，合并
+                let segment[0] = segment[0] + ptr[0]; // 更新长度
+                let segment[1] = ptr[1]; // 更新指针
+            } else {
+                let segment[1] = ptr;
+            }
+        }
+        if (~(ptr = freeList)) { // 前有空闲块
+            if (pre + pre[0] = segment) { // 前有连续空闲块，合并
+                    let pre[0] = pre[0] + segment[0]; // 更新长度
+                    let pre[1] = segment[1]; // 更新指针
+                } else {
+                    let pre[1] = segment;
+                }
+        } else { // 是第一个块
+            let freeList = segment; // 更新头指针
+        }
+        return;
+    }   
+
+    function int getFreeList(){
+        return freeList;
+    }
+}
